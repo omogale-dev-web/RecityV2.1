@@ -53,18 +53,43 @@ async function fileToCompressedDataUrl(file) {
 
 $$("[data-go]").forEach((button) => (button.onclick = () => go(button.dataset.go)));
 
-$("#start").onclick = () => {
+$("#start").onclick = async () => {
   const name = $("#citizen-name").value.trim();
   if (!name) return toast("Enter your name to continue");
-  const token = () => crypto.getRandomValues(new Uint32Array(1))[0].toString(36).toUpperCase().slice(0, 4);
-  const id = `RCY-UDG-${token()}-${token()}`;
+  const pin = $("#pin").value;
+  if (!/^\d{6}$/.test(pin)) return toast("PIN must contain exactly six digits");
+  if (pin !== $("#pin-confirm").value) return toast("PINs do not match");
   const title = $("#eco-title").value;
-  $("#welcome").textContent = title;
-  $("#profile-name").textContent = title;
-  $("#identity").textContent = id;
-  $("#profile-id").textContent = id;
-  go("dashboard");
-  toast("RECITY ID created");
+  try {
+    const response = await fetch("/api/auth/onboard", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, ecoIdentity: title, pin }) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Account could not be created.");
+    const profile = result.profile;
+    $("#welcome").textContent = profile.ecoIdentity;
+    $("#profile-name").textContent = profile.ecoIdentity;
+    $("#identity").textContent = profile.recityId;
+    $("#profile-id").textContent = profile.recityId;
+    go("dashboard");
+    toast(`RECITY ID created: ${profile.recityId}`);
+    setTimeout(() => window.alert(`Save this recovery code somewhere private. It is shown only once:\n\n${result.recoveryCode}`), 250);
+  } catch (error) { toast(error.message); }
+};
+
+$("#login").onclick = async () => {
+  const recityId = $("#login-id").value.trim();
+  const pin = $("#login-pin").value;
+  try {
+    const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recityId, pin }) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Sign-in could not be completed.");
+    const profile = result.profile;
+    $("#welcome").textContent = profile.ecoIdentity;
+    $("#profile-name").textContent = profile.ecoIdentity;
+    $("#identity").textContent = profile.recityId;
+    $("#profile-id").textContent = profile.recityId;
+    go("dashboard");
+    toast("Signed in securely");
+  } catch (error) { toast(error.message); }
 };
 
 $("#photo").onchange = async (event) => {
