@@ -1,0 +1,9 @@
+# Secrets and local deployment state
+.env
+.env.local
+.env.*.local
+.vercel
+
+# Local artifacts
+node_modules
+.DS_Store

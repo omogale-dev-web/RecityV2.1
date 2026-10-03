@@ -1,0 +1,1 @@
+export default async function handler(req,res){if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!process.env.GROQ_API_KEY)return res.status(503).json({error:'Waste analysis is not configured'});return res.status(501).json({error:'AI integration contract created; connect Groq after the decision-rule design is agreed'});}
